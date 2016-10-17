@@ -9,9 +9,8 @@ var PORT = process.env.PORT || 3000;
 
 var url;
 
-app.get('/',function(req,res){
-  res.sendfile('public/index.html')
-});
+app.use(express.static('public'));
+
 
 var encode = function(num){
   var list = "23456789abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ"
@@ -30,16 +29,30 @@ app.get('/new/:url*',function(req,res){
   var shortUrl;
   if(validUrl.isUri(url)){
     // generate a random short url
-    // NOTE: need to fix it so the app doesn't accidentally create the same 
-    // short url twice. 
-      var newKey = Math.floor(Math.random()*10000)+1;
+    // NOTE: my way of generating unique short urls is really not ideal.
+    // in the future, I should save and update an index in the database instead. 
+    var getShortUrl = function() {
+      var newKey = Math.floor(Math.random() * 10000) + 1;
       shortUrl = encode(newKey);
-      var newUrl = new Url({
-        original:url,
-        short:shortUrl
+      Url.findOne({short: shortUrl}).then(function (storedurl) {
+        if (storedurl) {
+          getShortUrl();
+        } else {
+          var newUrl = new Url({
+            original: url,
+            short: shortUrl
+          });
+          newUrl.save().then(function (newurl) {
+            res.send('your short url: https://supertiny-url.herokuapp.com/' + newurl.short)
+          }, function (error) {
+            res.send('could not create a short url: ' + error);
+          })
+        }
       });
-      newUrl.save();
-      res.send('your short url: https://supertiny-url.herokuapp.com/'+newUrl.short)
+    }
+    getShortUrl();
+
+
 
   } else {
     res.send("Please enter a valid url")}
@@ -48,15 +61,11 @@ app.get('/new/:url*',function(req,res){
 
 app.get('/:short',function(req,res){
   var short = req.params.short;
-  var retrievedUrl;
   Url.findOne({short:short}).then(function(url){
-    console.log(url.original);
-    retrievedUrl=url.original;
     res.redirect(url.original);
-  })
-    //.catch(e){
-    //res.send(e)
-  //}
+  }).catch(function(e){
+    res.send("could not redirect you: "+e)
+  });
 
 });
 

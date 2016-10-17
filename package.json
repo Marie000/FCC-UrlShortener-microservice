@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start":"node index.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js"
   },
@@ -14,5 +15,8 @@
     "express": "^4.14.0",
     "mongoose": "^4.6.4",
     "valid-url": "^1.0.9"
+  }
+  "engines":{
+    "node":"6.2.2"
   }
 }
